@@ -179,7 +179,6 @@ function wrapCsvValue(val, formatFn) {
   return `"${formatted}"`;
 }
 
-import sql from 'mssql';
 
 export default {
   data() {
@@ -239,55 +238,23 @@ export default {
     };
   },
   methods: {
-    queryBuilder() {
-      var query =
-        "select  distinct  R.uprole_code ,R.role_code,p.partner_code,p.name as name,p.streetname1,p.itinerary_code,pp.name as typo from partner p inner join role_itinerary ri on p.itinerary_code=ri.itinerary_code inner join role r on ri.role_code=r.role_code inner join saleschannel pp on p.saleschannel_code=pp.saleschannel_code inner join sinvoice s on r.role_code=s.role_code where";
-        console.log(this.item)
-      if (this.item.upRole) {
-        query += ' r.uprole_code = ' + this.item.upRole.toString().trim();
-      }
-      if (this.item.role) {
-        query += ' r.role_code = ' + this.item.role.toString().trim();
-
-      }
-       if (this.item.d1) {
-        var dd1 = new Date(this.item.d1).toISOString().slice(0, 19).split('T')[0];
-        if (this.item.d2) {
-          var dd2 = new Date(this.item.d2).toISOString().slice(0, 19).split('T')[0];
-
-          query += ' AND S.THEDATE BETWEEN ' + dd1 + ' AND ' + dd2;
-        } else {
-          query += ' AND S.THEDATE = ' + dd1;
-        }
-      }
-       if (this.item.ca) {
-        query += ' AND S.AMOUNT/COUNT(DISTINCT SINVOICE_CODE)> ' + this.item.ca.toString().trim();
-
-      }
-      if (this.item.typology) {
-        query += ' AND pp.name = ' + this.item.typology.toString().trim();
-
-      }
-      return query;
-    },
     search() {
-      var _this = this;
-      console.log(this.queryBuilder())
-      var config = {
-        user: 'sa',
-        password: 'mypassword',
-        server: 'localhost',
-        database: 'SchoolDB'
-      };
-      sql.connect(config, function(err) {
-        if (err) console.log(err);
-        var request = new sql.Request();
-        request.query(this.queryBuilder(), function(err, recordset) {
-          if (err) console.log(err)
-          _this.data = recordset;
+      var _this = this
+      axios.get('http://localhost:5000/', {
+          params: {
+            query: {
+              item: JSON.stringify(_this.item),
+            },
+          },
+        })
+        .then(function(data) {
+          _this.data = data.data
+          console.log(_this.data)
+        })
+        .catch(function(o) {
+          console.log(o)
+        })
 
-        });
-      });
     },
     exportItemsTable() {
       // naive encoding to csv format
